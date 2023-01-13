@@ -1,5 +1,3 @@
-#![feature(is_some_and)]
-
 use headings::Head;
 use log::*;
 use web_sys::HtmlInputElement;
@@ -121,7 +119,7 @@ fn app() -> Html {
         move |value: Option<Vec<_>>| {
             info!("Updating internal bytes to {:?}", value);
             if let Some(mut vec) = value {
-                if vec.last().is_some_and(|last| *last & 0x80 != 0) {
+                if vec.last().filter(|last| *last & 0x80 != 0).is_some() {
                     vec.push(0)
                 }
                 state_handle.set(vec)
