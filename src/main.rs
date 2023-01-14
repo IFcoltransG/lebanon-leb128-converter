@@ -1,5 +1,6 @@
 use enclose::enclose;
 use headings::Head;
+use links::Link;
 use log::*;
 use std::fmt::Debug;
 use web_sys::HtmlInputElement;
@@ -7,6 +8,7 @@ use yew::prelude::*;
 
 mod convert;
 mod headings;
+mod links;
 
 #[derive(Properties, PartialEq)]
 struct NumberInputProps {
@@ -98,8 +100,38 @@ fn SignedModeInput(
     }
 }
 
-#[function_component(App)]
-fn app() -> Html {
+#[function_component]
+fn About() -> Html {
+    html! {
+        <footer>
+        <Head name="About" level=3 />
+            <>
+                { "Enter text in either box to convert it between " }
+                <abbr title="Little Endian Base 128"> { "LEB128" } </abbr>
+                { " and hexadecimal."}
+            </>
+            <br />
+            <>
+                <Link text="Source link" to="https://github.com/IFcoltransG/lebanon" />
+                {" and "}
+                <Link text="Wikipedia page" to="https://en.wikipedia.org/wiki/LEB128" />
+            </>
+            <br />
+            <>
+                { "Made using " }
+                <Link text="Yew" to="https://yew.rs" />
+                { ", packed with " }
+                <Link text="Trunk" to="https://trunkrs.dev/" />
+                { ", served from " }
+                <Link text="GitHub Pages" to="https://pages.github.com/" />
+            </>
+            <address> { "Written by IFcoltransG on " } <Link text="GitHub" to="https://github.com/IFcoltransG" /> </address>
+        </footer>
+    }
+}
+
+#[function_component]
+fn App() -> Html {
     /// Compare the value stored in state with a new one (according to key) and
     /// update if it doesn't match
     fn possibly_update<T, C, F>(current_value: &UseStateHandle<T>, new_value: T, key: F)
@@ -179,10 +211,11 @@ fn app() -> Html {
     });
     html! {
         <>
-            <Head name={ "LEB-128 Converter" } />
+            <Head name={ "Online LEB128 Converter" } />
             <SignedModeInput signed_mode={ *signed_state } update={ update_signed }/>
             <HexInput hex_string={ (*hex_state).clone() } signed_mode={ *signed_state } update={ update_hex.clone() }/>
             <NumberInput num_string={ (*num_state).clone() } signed_mode={ *signed_state } update={ update_num.clone() }/>
+            <About />
         </>
     }
 }
