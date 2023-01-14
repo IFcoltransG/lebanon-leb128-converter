@@ -120,6 +120,8 @@ fn About() -> Html {
                 <Link text="Yew" to="https://yew.rs" />
                 { ", packed with " }
                 <Link text="Trunk" to="https://trunkrs.dev/" />
+                { ", styled with " }
+                <Link text="Simple.css" to="https://simplecss.org" />
                 { ", served from " }
                 <Link text="GitHub Pages" to="https://pages.github.com/" />
             </>
