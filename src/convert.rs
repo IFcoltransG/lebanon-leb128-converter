@@ -5,7 +5,11 @@ use tap::prelude::*;
 
 pub fn to_unsigned(input: &Vec<u8>) -> Option<u64> {
     let mut readable = &input[..];
-    leb128::read::unsigned(&mut readable).ok().tap(|v| if v.is_none() {error!("{:?}", input)})
+    leb128::read::unsigned(&mut readable).ok().tap(|v| {
+        if v.is_none() {
+            error!("{:?}", input)
+        }
+    })
 }
 
 pub fn from_unsigned(input: u64) -> Option<Vec<u8>> {
@@ -16,7 +20,11 @@ pub fn from_unsigned(input: u64) -> Option<Vec<u8>> {
 
 pub fn to_signed(input: &Vec<u8>) -> Option<i64> {
     let mut readable = &input[..];
-    leb128::read::signed(&mut readable).ok().tap(|v| if v.is_none() {error!("{:?}", input)})
+    leb128::read::signed(&mut readable).ok().tap(|v| {
+        if v.is_none() {
+            error!("{:?}", input)
+        }
+    })
 }
 
 pub fn from_signed(input: i64) -> Option<Vec<u8>> {

@@ -1,5 +1,7 @@
+use enclose::enclose;
 use headings::Head;
 use log::*;
+use std::fmt::Debug;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 
@@ -7,10 +9,17 @@ mod convert;
 mod headings;
 
 #[derive(Properties, PartialEq)]
-struct InputProps {
-    bytes: Vec<u8>,
+struct NumberInputProps {
+    num_string: String,
     signed_mode: bool,
-    update: Callback<Option<Vec<u8>>>,
+    update: Callback<Option<String>>,
+}
+
+#[derive(Properties, PartialEq)]
+struct HexInputProps {
+    hex_string: String,
+    signed_mode: bool,
+    update: Callback<Option<String>>,
 }
 
 #[derive(Properties, PartialEq)]
@@ -21,65 +30,48 @@ struct SignedModeInputProps {
 
 #[function_component]
 fn NumberInput(
-    InputProps {
-        bytes,
+    NumberInputProps {
+        num_string,
         update,
         signed_mode,
-    }: &InputProps,
+    }: &NumberInputProps,
 ) -> Html {
     let signed = *signed_mode;
     let minimum = (!signed).then_some("0");
-    let number = if signed {
-        info!("making signed number");
-        format!("{}", convert::to_signed(&bytes).expect("to number"))
-    } else {
-        info!("making unsigned number");
-        format!("{}", convert::to_unsigned(&bytes).expect("to number"))
-    };
-    let on_input = {
-        let update = update.clone();
-        move |e: InputEvent| {
-            let vec = e.target_dyn_into::<HtmlInputElement>().and_then(|element| {
-                let val = element.value();
-                if signed {
-                    // parse as signed integer
-                    convert::from_signed(val.parse().ok()?)
-                } else {
-                    // parse as unsigned integer
-                    convert::from_unsigned(val.parse().ok()?)
-                }
-            });
-            update.emit(vec)
-        }
-    };
+    let on_input = enclose!((update) move |e: InputEvent| {
+        let vec = e.target_dyn_into::<HtmlInputElement>()
+            .map(|element| element.value());
+        update.emit(vec)
+    });
     html! {
         <>
             <label>
                 <Head name="Decoded Number" level=2/>
-                <input type="number" oninput={ on_input } value={ number } min={ minimum }/>
+                <input type="number" oninput={ on_input } value={ (*num_string).clone() } min={ minimum }/>
             </label>
         </>
     }
 }
 
 #[function_component]
-fn HexInput(InputProps { bytes, update, .. }: &InputProps) -> Html {
-    let hex = convert::to_hex(bytes).expect("to hex");
-    // using onchange rather than oninput so that changes don't upset the cursor
-    let on_change = {
-        let update = update.clone();
-        move |e: Event| {
-            let vec = e
-                .target_dyn_into::<HtmlInputElement>()
-                .and_then(|element| convert::from_hex(element.value()));
-            update.emit(vec)
-        }
-    };
+fn HexInput(
+    HexInputProps {
+        hex_string, update, ..
+    }: &HexInputProps,
+) -> Html {
+    // let hex = convert::to_hex(hex_string).expect("to hex");
+    let on_input = enclose!((update) move |e: InputEvent| {
+        let vec = e
+            .target_dyn_into::<HtmlInputElement>()
+            // .and_then(|element| convert::from_hex(element.value()));
+            .map(|element| element.value());
+        update.emit(vec)
+    });
     html! {
         <>
             <label>
                 <Head name="Encoded Hex" level=2/>
-                <input type="text" onchange={ on_change } value={ hex } />
+                <input type="text" oninput={ on_input } value={ (*hex_string).clone() } />
             </label>
         </>
     }
@@ -92,13 +84,10 @@ fn SignedModeInput(
         update,
     }: &SignedModeInputProps,
 ) -> Html {
-    let on_change = {
-        let update = update.clone();
-        move |e: Event| {
-            e.target_dyn_into::<HtmlInputElement>()
-                .map(|element| update.emit(element.checked()));
-        }
-    };
+    let on_change = enclose!((update) move |e: Event| {
+        e.target_dyn_into::<HtmlInputElement>()
+            .map(|element| update.emit(element.checked()));
+    });
     html! {
         <>
             <label>
@@ -111,34 +100,89 @@ fn SignedModeInput(
 
 #[function_component(App)]
 fn app() -> Html {
+    /// Compare the value stored in state with a new one (according to key) and
+    /// update if it doesn't match
+    fn possibly_update<T, C, F>(current_value: &UseStateHandle<T>, new_value: T, key: F)
+    where
+        C: PartialEq,
+        F: Fn(&T) -> C,
+        T: Clone + Debug,
+    {
+        if key(&current_value) != key(&new_value) {
+            info!("Chose to update variable with {:?}", new_value);
+            current_value.set(new_value)
+        }
+    }
     let bytes_state = use_state_eq(|| vec![0x00]);
     let signed_state = use_state(|| false);
-    let update = {
-        let state_handle = bytes_state.clone();
-        // callback that updates the state of the program
-        move |value: Option<Vec<_>>| {
-            info!("Updating internal bytes to {:?}", value);
-            if let Some(mut vec) = value {
-                if vec.last().filter(|last| *last & 0x80 != 0).is_some() {
-                    vec.push(0)
-                }
-                state_handle.set(vec)
+    let hex_state = use_state_eq(|| "00".to_string());
+    let num_state = use_state_eq(|| "0".to_string());
+    // callback that updates the state of the program
+    let update = enclose!((bytes_state, hex_state, num_state, signed_state) move |value| {
+        info!("Updating internal bytes to {:?}", value);
+
+        let check_hex = |string: &String| convert::from_hex(string.clone());
+        if let Some(new_hex) = convert::to_hex(&value) {
+            info!("Trying hex update");
+            possibly_update(&hex_state, new_hex, check_hex);
+        } else {
+            warn!("Trying hex overwrite");
+            possibly_update(&hex_state, "".to_string(), check_hex)
+        }
+
+        let signed = *signed_state;
+        let check_num = |string: &String| {
+            if signed {
+                convert::from_signed(string.parse().ok()?)
+            } else {
+                convert::from_unsigned(string.parse().ok()?)
             }
+        };
+        let new_num_wrapped = if signed {
+            convert::to_signed(&value).map(|int| format!("{}", int))
+        } else {
+            convert::to_unsigned(&value).map(|int| format!("{}", int))
+        };
+        if let Some(new_num) = new_num_wrapped {
+            info!("Trying num update");
+            possibly_update(&num_state, new_num, check_num);
+        } else {
+            warn!("Trying num overwrite");
+            possibly_update(&num_state, "NaN".to_string(), check_num)
         }
-    };
-    let update_signed = {
-        let signed_handle = signed_state.clone();
-        move |value: bool| {
-            info!("Updating signed mode to {:?}", value);
-            signed_handle.set(value);
-        }
-    };
+
+        bytes_state.set(value)
+    });
+    let update_hex = enclose!((update) move |hex_string| {
+        let Some(hex_string) = hex_string else {return};
+        let Some(vec) = convert::from_hex(hex_string) else {return};
+        update(vec);
+    });
+    let update_num = enclose!((update, signed_state) move |num_string: Option<String>| {
+        let signed = *signed_state;
+        let Some(num_string) = num_string else {return};
+        let wrapped_vec = 'bytes: {
+            if signed {
+                let Ok(parsed) = num_string.parse() else {break 'bytes None};
+                convert::from_signed(parsed)
+            } else {
+                let Ok(parsed) = num_string.parse() else {break 'bytes None};
+                convert::from_unsigned(parsed)
+            }
+        };
+        let Some(vec) = wrapped_vec else {return};
+        update(vec);
+    });
+    let update_signed = enclose!((signed_state) move |value: bool| {
+        info!("Updating signed mode to {:?}", value);
+        signed_state.set(value);
+    });
     html! {
         <>
             <Head name={ "LEB-128 Converter" } />
             <SignedModeInput signed_mode={ *signed_state } update={ update_signed }/>
-            <HexInput bytes={ (*bytes_state).clone() } signed_mode={ *signed_state } update={ update.clone() }/>
-            <NumberInput bytes={ (*bytes_state).clone() } signed_mode={ *signed_state } update={ update.clone() }/>
+            <HexInput hex_string={ (*hex_state).clone() } signed_mode={ *signed_state } update={ update_hex.clone() }/>
+            <NumberInput num_string={ (*num_state).clone() } signed_mode={ *signed_state } update={ update_num.clone() }/>
         </>
     }
 }
