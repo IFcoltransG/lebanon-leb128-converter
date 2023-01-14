@@ -61,11 +61,9 @@ fn HexInput(
         hex_string, update, ..
     }: &HexInputProps,
 ) -> Html {
-    // let hex = convert::to_hex(hex_string).expect("to hex");
     let on_input = enclose!((update) move |e: InputEvent| {
         let vec = e
             .target_dyn_into::<HtmlInputElement>()
-            // .and_then(|element| convert::from_hex(element.value()));
             .map(|element| element.value());
         update.emit(vec)
     });
@@ -104,7 +102,7 @@ fn SignedModeInput(
 fn About() -> Html {
     html! {
         <footer>
-        <Head name="About" level=3 />
+            <Head name="About" level=3 />
             <>
                 { "Enter text in either box to convert it between " }
                 <abbr title="Little Endian Base 128"> { "LEB128" } </abbr>
@@ -125,7 +123,7 @@ fn About() -> Html {
                 { ", served from " }
                 <Link text="GitHub Pages" to="https://pages.github.com/" />
             </>
-            <address> { "Written by IFcoltransG on " } <Link text="GitHub" to="https://github.com/IFcoltransG" /> </address>
+            <address> { "Written by IFcoltransG from " } <Link text="GitHub" to="https://github.com/IFcoltransG" /> </address>
         </footer>
     }
 }
@@ -211,10 +209,12 @@ fn App() -> Html {
     });
     html! {
         <>
-            <Head name={ "Online LEB128 Converter" } />
-            <SignedModeInput signed_mode={ *signed_state } update={ update_signed }/>
-            <HexInput hex_string={ (*hex_state).clone() } signed_mode={ *signed_state } update={ update_hex.clone() }/>
-            <NumberInput num_string={ (*num_state).clone() } signed_mode={ *signed_state } update={ update_num.clone() }/>
+            <main id="main-content">
+                <Head name={ "Online LEB128 Converter" } />
+                <SignedModeInput signed_mode={ *signed_state } update={ update_signed }/>
+                <HexInput hex_string={ (*hex_state).clone() } signed_mode={ *signed_state } update={ update_hex.clone() }/>
+                <NumberInput num_string={ (*num_state).clone() } signed_mode={ *signed_state } update={ update_num.clone() }/>
+            </main>
             <About />
         </>
     }
