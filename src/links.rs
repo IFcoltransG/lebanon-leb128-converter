@@ -9,6 +9,6 @@ pub struct LinkProps {
 #[function_component]
 pub fn Link(LinkProps { text, to }: &LinkProps) -> Html {
     html! {
-        <a href={ (*to).clone() }> {text} </a>
+        <a href={ (*to).clone() } rel="noopener noreferrer"> {text} </a>
     }
 }
