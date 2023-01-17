@@ -102,7 +102,7 @@ fn SignedModeInput(
 fn About() -> Html {
     html! {
         <footer>
-            <Head name="About" level=3 />
+            <Head name="About" level=2 />
             <>
                 { "Enter text in either box to convert it between " }
                 <abbr title="Little Endian Base 128"> { "LEB128" } </abbr>
