@@ -125,7 +125,7 @@ fn About() -> Html {
                 { ", served from " }
                 <Link text="GitHub Pages" to="https://pages.github.com/" />
             </>
-            <address> { "Written by IFcoltransG, who can be found on " } <Link text="GitHub" to="https://github.com/IFcoltransG" /> </address>
+            <address> { "Written by " } <Link text="IFcoltransG on GitHub" to="https://github.com/IFcoltransG" /> </address>
         </footer>
     }
 }
