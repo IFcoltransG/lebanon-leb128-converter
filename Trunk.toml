@@ -1,7 +1,7 @@
 [build]
 target = "index.html"
 dist = "dist"
-public_url = "/lebanon/"
+public_url = "/lebanon-leb128-converter/"
 
 [clean]
 dist = "dist"
