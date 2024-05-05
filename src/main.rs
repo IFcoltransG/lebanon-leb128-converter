@@ -110,7 +110,7 @@ fn About() -> Html {
             </>
             <br />
             <>
-                <Link text="Source link" to="https://github.com/IFcoltransG/lebanon" />
+                <Link text="Source link" to="https://github.com/IFcoltransG/lebanon-leb128-converter" />
                 {" and "}
                 <Link text="Wikipedia page" to="https://en.wikipedia.org/wiki/LEB128" />
             </>
